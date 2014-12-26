@@ -1,0 +1,14 @@
+{
+    "name": "danielfpedro/mayhem",
+    "description": "Micro-framework",
+    "require": {
+        "slim/slim": "~2.5",
+        "aura/sqlquery": "~2.1"
+    },
+    "authors": [
+        {
+            "name": "Daniel Pedro",
+            "email": "danielfpedro@gmail.com"
+        }
+    ]
+}

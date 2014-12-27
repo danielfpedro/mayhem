@@ -9,6 +9,11 @@
         "aura/sqlquery": "~2.1",
         "aura/intl": "*"
     },
+     "autoload": {
+        "psr-4": {
+            "Mayhem\\": "src"
+        }
+    },
     "authors": [
         {
             "name": "Daniel Pedro",

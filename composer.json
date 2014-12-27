@@ -1,6 +1,9 @@
 {
     "name": "danielfpedro/mayhem",
     "description": "Micro-framework",
+    "type": "library",
+    "keywords": ["framework"],
+    "license": "MIT",
     "require": {
         "slim/slim": "~2.5",
         "aura/sqlquery": "~2.1"

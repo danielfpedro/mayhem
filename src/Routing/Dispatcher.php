@@ -27,6 +27,7 @@ class Dispatcher
 
 				if (method_exists($obj, $action)) {
 					$obj->request = $slim->request;
+					$obj->config = $config;
 					if ($config['responseType'] == 'JSON') {
 						echo json_encode(call_user_func_array([$obj, $action], $params));
 						return true;

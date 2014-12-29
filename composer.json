@@ -7,7 +7,6 @@
     "require": {
         "slim/slim": "~2.5",
         "aura/sqlquery": "~2.1",
-        "aura/intl": "*"
     },
      "autoload": {
         "psr-4": {

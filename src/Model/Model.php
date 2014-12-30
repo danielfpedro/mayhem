@@ -8,6 +8,12 @@ use PDO;
 
 class Model
 {
+	public $select;
+
+	public function __construct()
+	{
+		$this->newQuery();
+	}
 
 	public function newQuery()
 	{
@@ -15,7 +21,7 @@ class Model
 		$query = $query_factory->newSelect();
 
 		$query->from($this->tableName);
-		return $query;
+		$this->select = $query;
 	}
 
 	public static function connect($default = 'default')
@@ -39,14 +45,14 @@ class Model
 		return $sth;
 	}
 
-	public function findAll($query)
+	public function findAll($query = null)
 	{
 		return $this->executeQuery($query)->fetchAll(PDO::FETCH_OBJ);
 	}
 
-	public function findOne($query)
+	public function findOne($query = null)
 	{
-		return $this->executeQuery($query)->fetch(PDO::FETCH_OBJ);
+		return $this->executeQuery($this->select)->fetch(PDO::FETCH_OBJ);
 	}	
 
 }

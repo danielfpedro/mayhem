@@ -10,11 +10,10 @@ use Exception;
 class Model
 {
 
+	public $connection = 'default';
 	public $primaryKeyName = 'id';
-	public $select;
-	public $insert;
 
-	private $pdo;
+	private $dbh;
 	private $sth;
 
 	public $queryFactory;
@@ -24,24 +23,12 @@ class Model
 	public function __construct()
 	{
 		$this->setPDO();
-
 		$this->queryFactory = new QueryFactory('mysql');
-		$this->newQuery();
 	}
 
-	public function newQuery()
+	private function setPDO()
 	{
-		$query = $this->queryFactory->newSelect();
-
-		$query->from($this->tableName);
-		$this->select = $query;
-	}
-	public function newInsert()
-	{
-		$insert = $this->queryFactory->newInsert();
-
-		$insert->into($this->tableName);
-		$this->insert = $insert;
+		$this->dbh = self::connect();
 	}
 
 	public static function connect($default = 'default')
@@ -56,10 +43,36 @@ class Model
 		}
 	}
 
-	private function setPDO()
+	public function executeQuery($query, $connection = null)
 	{
-		$this->pdo = self::connect();
+		$sth = $this->dbh->prepare($query->__toString());
+		$sth->execute($query->getBindValues());
+		return $sth;
 	}
+
+	public function find()
+	{
+		$select = $this->queryFactory->newSelect();
+
+		$select->from($this->tableName);
+		return $select;
+	}
+
+	public function customInsert()
+	{
+		$insert = $this->queryFactory->newInsert();
+
+		$insert->into($this->tableName);
+		return $insert;
+	}
+	public function customUpdate()
+	{
+		$update = $this->queryFactory->newUpdate();
+
+		$update->into($this->tableName);
+		return $update;
+	}
+
 
 	public function save($data)
 	{
@@ -73,12 +86,15 @@ class Model
 		if (array_key_exists($this->primaryKeyName, $data)) {
 			$id = $data[$this->primaryKeyName];
 			unset($data[$this->primaryKeyName]);
+
 			$update = $this->queryFactory->newUpdate();
+
 			$update
 				->table($this->tableName)
 				->cols($data)
 				->where("{$this->primaryKeyName} = :id")
 				->bindValue($this->primaryKeyName, $id);
+
 			return $this->executeQuery($update);
 		} else {
 			throw new Exception("Can't update, primary key needed", 1);
@@ -87,21 +103,29 @@ class Model
 		return true;
 	}
 
-	public function executeQuery($query, $connection = null)
+	public function delete($id)
 	{
-		$sth = $this->pdo->prepare($query->__toString());
-		$sth->execute($query->getBindValues());
-		return $sth;
+		$delete = $this->queryFactory->newDelete();
+		$delete->from($this->tableName)->where("{$this->primaryKeyName} = :id")->bindValue(':id', $id);
+		$this->executeQuery($delete);
 	}
 
-	public function findAll($query = null)
+	public function customDelete()
+	{
+		$delete = $this->queryFactory->customDelete();
+
+		$delete->from($this->tableName);
+		return $delete;
+	}
+
+	public function all($query)
 	{
 		return $this->executeQuery($query)->fetchAll(PDO::FETCH_OBJ);
 	}
 
-	public function findOne($query = null)
+	public function one($query)
 	{
-		return $this->executeQuery($this->select)->fetch(PDO::FETCH_OBJ);
+		return $this->executeQuery($query->limit(1))->fetch(PDO::FETCH_OBJ);
 	}	
 
 }

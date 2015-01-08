@@ -22,14 +22,15 @@ class Dispatcher
 			$controller_class_name = Dispatcher::setControllerClassName($controller);
 
 			if (class_exists($controller_class_name)) {
-				$obj = new $controller_class_name;
+				$obj = new $controller_class_name();
+				$obj->config = $config;
+				$obj->request = $slim->request;
+				$obj->slim = $slim;
 				$action = Dispatcher::resolveAction($action, $slim->request->getMethod());
 
 				if (method_exists($obj, $action)) {
-					$obj->request = $slim->request;
-					$obj->config = $config;
 					if ($config['responseType'] == 'JSON') {
-						echo json_encode(call_user_func_array([$obj, $action], $params));
+						call_user_func_array([$obj, $action], $params);
 						return true;
 					}
 				} else {

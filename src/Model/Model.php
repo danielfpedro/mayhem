@@ -2,8 +2,12 @@
 
 namespace Mayhem\Model;
 
-use Aura\SqlQuery\QueryFactory;
 use Mayhem\Database\Datasource;
+use Mayhem\Validation\ValitronAdapter;
+
+use Aura\SqlQuery\QueryFactory;
+use Valitron\Validator;
+
 use PDO;
 use Exception;
 
@@ -18,26 +22,20 @@ class Model
 
 	public $queryFactory;
 
-	public $errors;
+	public $validationErrors;
 
-	public function __construct()
+	public function __construct($connection = null)
 	{
-		$this->setPDO();
-		$this->queryFactory = new QueryFactory('mysql');
+		$connection = (!is_null($connection)) ? $connection : $this->connection;
+		$this->queryFactory = new QueryFactory(Datasource::getType($connection));
+		$this->setDbh($connection);
 	}
 
-	private function setPDO()
+	private function setDbh($connection)
 	{
-		$this->dbh = self::connect();
-	}
-
-	public static function connect($default = 'default')
-	{
-		$stringConnection = Datasource::getStringConnection('default');
 		try {
-			$conn = new PDO($stringConnection[0], $stringConnection[1], $stringConnection[2]);
-			$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-			return $conn;
+			$conn = Datasource::getConnection($connection);
+			$this->dbh = $conn;
 		} catch(PDOException $e) {
 			throw $e;
 		}
@@ -47,6 +45,7 @@ class Model
 	{
 		$sth = $this->dbh->prepare($query->__toString());
 		$sth->execute($query->getBindValues());
+		$this->rowsAffected = $sth->rowCount();
 		return $sth;
 	}
 
@@ -54,7 +53,7 @@ class Model
 	{
 		$select = $this->queryFactory->newSelect();
 
-		$select->from($this->tableName);
+		$select->from($this->tableName .' AS '. basename(get_called_class()));
 		return $select;
 	}
 
@@ -69,38 +68,81 @@ class Model
 	{
 		$update = $this->queryFactory->newUpdate();
 
-		$update->into($this->tableName);
+		$update->table($this->tableName);
 		return $update;
 	}
 
-
-	public function save($data)
+	public function save($data, $options = [])
 	{
-		$insert = $this->queryFactory->newInsert();
-		$insert->into($this->tableName)->cols($data);
-		$this->executeQuery($insert);
+		return $this->saveOrUpdate('create', $data, $options);
 	}
 
-	public function update($data)
+	public function update($data, $options = [])
 	{
-		if (array_key_exists($this->primaryKeyName, $data)) {
-			$id = $data[$this->primaryKeyName];
-			unset($data[$this->primaryKeyName]);
+		return $this->saveOrUpdate('update', $data, $options);
+	}
 
-			$update = $this->queryFactory->newUpdate();
+	public function saveOrUpdate($type, $data, $options = [])
+	{
+		if (!$data) {
+			throw new Exception("Data to be saved can't be null", 1);
+			
+		}
+		$useValidation = (isset($options['validate'])) ? $options['validate'] : true;
 
-			$update
-				->table($this->tableName)
-				->cols($data)
-				->where("{$this->primaryKeyName} = :id")
-				->bindValue($this->primaryKeyName, $id);
-
-			return $this->executeQuery($update);
-		} else {
-			throw new Exception("Can't update, primary key needed", 1);
+		$validator = new Validator($data);
+		$validator = ValitronAdapter::AdaptRules($this->validations, $validator, $type);
+		
+		if (method_exists($this, 'beforeValidate') && $useValidation){
+			$data = $this->beforeValidate($data, $type);
 		}
 
-		return true;
+		if ($validator->validate() || !$useValidation) {
+			if (method_exists($this, 'afterValidate')){
+				$data = $this->afterValidate($data, $type);
+			}
+
+			if ($type == 'create') {
+				$insert = $this->queryFactory->newInsert();
+
+				if (method_exists($this, 'beforeSave')){
+					$data = $this->beforeSave($data, $type);
+				}
+
+				$insert->into($this->tableName)->cols($data);
+				$query = $insert;
+			} else {
+				if (array_key_exists($this->primaryKeyName, $data)) {
+					$id = $data[$this->primaryKeyName];
+					unset($data[$this->primaryKeyName]);
+
+					$update = $this->queryFactory->newUpdate();
+
+					if (method_exists($this, 'beforeSave')){
+						$data = $this->beforeSave($data, $type);
+					}
+					
+					$update
+						->table($this->tableName)
+						->cols($data)
+						->where("{$this->primaryKeyName} = :id")
+						->bindValue($this->primaryKeyName, $id);
+
+					$query = $update;
+				} else {
+					throw new Exception("Can't update, primary key needed", 1);
+				}
+			}
+
+			$this->executeQuery($query);
+			if (method_exists($this, 'afterSave')){
+				$this->afterSave($data, $type);
+			}
+			return true;
+		} else {
+			$this->validationErrors = $validator->errors();	
+			return false;
+		}
 	}
 
 	public function delete($id)
@@ -108,11 +150,14 @@ class Model
 		$delete = $this->queryFactory->newDelete();
 		$delete->from($this->tableName)->where("{$this->primaryKeyName} = :id")->bindValue(':id', $id);
 		$this->executeQuery($delete);
+
+		//Always return true because controller expect boolean, if aboce instruction get error an exception will be raised
+		return true;
 	}
 
 	public function customDelete()
 	{
-		$delete = $this->queryFactory->customDelete();
+		$delete = $this->queryFactory->newDelete();
 
 		$delete->from($this->tableName);
 		return $delete;

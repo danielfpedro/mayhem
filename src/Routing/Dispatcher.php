@@ -26,6 +26,9 @@ class Dispatcher
 				$obj->config = $config;
 				$obj->request = $slim->request;
 				$obj->slim = $slim;
+
+				//Remove tha _ from action name, users can't acces methods the starts with _ char
+				$action = ($action[0] == '_') ? ltrim($action, '_') : $action;
 				$action = Dispatcher::resolveAction($action, $slim->request->getMethod());
 
 				if (method_exists($obj, $action)) {

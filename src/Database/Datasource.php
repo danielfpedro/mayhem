@@ -2,15 +2,44 @@
 
 namespace Mayhem\Database;
 
+use PDO;
+use Exception;
+
 class Datasource
 {
-	public static function getStringConnection($connection = 'default')
+
+
+	public static function getConnection($connection)
+	{
+		$datasource = self::getDatasource();
+
+		try {
+			$data = $datasource[$connection];
+		} catch (Exception $e) {
+			throw new Exception("Connection '{$connection}' name not found on App\config\datasource", 1);	
+		}
+
+		$stringConnection = "mysql:host={$data['host']};dbname={$data['dbname']};charset={$data['charset']}";
+
+		$conn = new PDO($stringConnection, $data['user'], $data['password']);
+		$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		
+		return $conn;
+	}
+
+	public static function getType($connection)
+	{
+		$datasource = self::getDatasource();
+		try {
+			return $datasource[$connection]['type'];
+		} catch (Exception $e) {
+			throw new Exception("Connection '{$connection}' name not found on App\config\datasource", 1);	
+		}
+	}
+
+	private static function getDatasource()
 	{
 		require(CONFIG . 'datasource.php');
-		
-		$data = $datasource[$connection];
-
-		return ["mysql:host={$data['host']};dbname={$data['dbname']};charset={$data['charset']}", $data['user'], $data['password']];
-	
+		return $datasource;
 	}
 }

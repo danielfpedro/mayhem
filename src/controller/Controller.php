@@ -17,7 +17,12 @@ class Controller
 	{
 	}
 
-	public function response($code, $body = null, $type = 'json')
+	public function response($code, $status, $body, $type = 'json')
+	{
+		return $this->responseRaw($code, ['status' => $status, 'message' => $body], $type);
+	}
+
+	public function responseRaw($code, $body = null, $type = 'json')
 	{
 		switch ($type) {
 			case 'json':

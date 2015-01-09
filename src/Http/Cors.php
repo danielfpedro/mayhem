@@ -10,7 +10,7 @@ class Cors
 	/**
 	 * Set the CORS headers
 	 */
-	static public function setCORS()
+	static public function getCORS()
 	{
 
 		if (isset($_SERVER['HTTP_ORIGIN'])) {

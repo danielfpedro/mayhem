@@ -27,9 +27,15 @@ class Dispatcher
 				$obj->request = $slim->request;
 				$obj->slim = $slim;
 
-				//Remove tha _ from action name, users can't acces methods the starts with _ char
-				$action = ($action[0] == '_') ? ltrim($action, '_') : $action;
-				$action = Dispatcher::resolveAction($action, $slim->request->getMethod());
+				//Remove the _ from action name, users can't acces methods the starts with _ char
+				$action = ($action && $action[0] == '_') ? ltrim($action, '_') : $action;
+
+				$result = Dispatcher::resolveAction($action, $slim->request->getMethod());
+				$action = $result['action'];
+				if ($result['params']) {
+					$firstParam[] = $result['params'];
+					$params = array_merge($firstParam, $params);
+				}
 
 				if (method_exists($obj, $action)) {
 					if ($config['responseType'] == 'JSON') {
@@ -58,6 +64,7 @@ class Dispatcher
  */
 	public static function resolveAction($action, $method)
 	{
+		$params = null;
 		if (!$action) {
 			switch ($method) {
 				case 'GET':
@@ -69,6 +76,7 @@ class Dispatcher
 			}
 		} else {
 			if(is_numeric($action)){
+				$params = $action;
 				switch ($method) {
 					case 'GET':
 						$action = "view";
@@ -83,7 +91,7 @@ class Dispatcher
 			}
 		}
 
-		return $action;
+		return ['action' => $action, 'params' => $params];
 	}
 
 /**

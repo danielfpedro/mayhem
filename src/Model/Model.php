@@ -162,12 +162,14 @@ class Model
 
 	public function all($query)
 	{
-		return $this->executeQuery($query)->fetchAll(PDO::FETCH_OBJ);
+		$values = $this->executeQuery($query)->fetchAll(PDO::FETCH_OBJ);
+		return ($values) ? $values : null;
 	}
 
 	public function one($query)
 	{
-		return $this->executeQuery($query->limit(1))->fetch(PDO::FETCH_OBJ);
+		$value = $this->executeQuery($query->limit(1))->fetch(PDO::FETCH_OBJ);;
+		return ($value) ? $value : null;
 	}	
 
 }

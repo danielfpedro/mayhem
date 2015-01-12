@@ -24,12 +24,14 @@ class Controller
 
 	public function responseRaw($code, $body = null, $type = 'json')
 	{
+		$this->slim->response->setStatus($code);
 		switch ($type) {
 			case 'json':
+				$this->slim->response->headers->set('Content-Type', 'application/json');
 				$body = json_encode($body);
 				break;
 		}
-		return $this->slim->halt($code, $body);
+		return $this->slim->response->write($body);
 	}
 }
 

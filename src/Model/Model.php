@@ -15,7 +15,9 @@ class Model
 {
 
 	public $connection = 'default';
-	public $primaryKeyName = 'id';
+	public $pkName = 'id';
+
+	public $validations;
 
 	private $dbh;
 	private $sth;
@@ -86,69 +88,64 @@ class Model
 	{
 		if (!$data) {
 			throw new Exception("Data to be saved can't be null", 1);
-			
 		}
-		$useValidation = (isset($options['validate'])) ? $options['validate'] : true;
 
-		$validator = new Validator($data);
-		$validator = ValitronAdapter::AdaptRules($this->validations, $validator, $type);
+		$useValidation = true;
+		if (!$this->validations) {
+			$useValidation = false;
+		} elseif (isset($options['validate'])) {
+			$useValidation = $options['validate'];
+		}
 		
-		if (method_exists($this, 'beforeValidate') && $useValidation){
-			$data = $this->beforeValidate($data, $type);
+		if ($useValidation) {
+			$validator = new Validator($data);
+			$validator = ValitronAdapter::AdaptRules($this->validations, $validator, $type);
+
+			if (method_exists($this, 'beforeValidate') && $useValidation){
+				$data = $this->beforeValidate($data, $type);
+			}
+			if (!$validator->validate()) {
+				$this->validationErrors = $validator->errors();
+				return false;
+			}
 		}
 
-		if ($validator->validate() || !$useValidation) {
-			if (method_exists($this, 'afterValidate')){
-				$data = $this->afterValidate($data, $type);
-			}
-
-			if ($type == 'create') {
-				$insert = $this->queryFactory->newInsert();
-
-				if (method_exists($this, 'beforeSave')){
-					$data = $this->beforeSave($data, $type);
-				}
-
-				$insert->into($this->tableName)->cols($data);
-				$query = $insert;
-			} else {
-				if (array_key_exists($this->primaryKeyName, $data)) {
-					$id = $data[$this->primaryKeyName];
-					unset($data[$this->primaryKeyName]);
-
-					$update = $this->queryFactory->newUpdate();
-
-					if (method_exists($this, 'beforeSave')){
-						$data = $this->beforeSave($data, $type);
-					}
-					
-					$update
-						->table($this->tableName)
-						->cols($data)
-						->where("{$this->primaryKeyName} = :id")
-						->bindValue($this->primaryKeyName, $id);
-
-					$query = $update;
-				} else {
-					throw new Exception("Can't update, primary key needed", 1);
-				}
-			}
-
-			$this->executeQuery($query);
-			if (method_exists($this, 'afterSave')){
-				$this->afterSave($data, $type);
-			}
-			return true;
+		if ($type == 'create') {
+			$insert = $this->queryFactory->newInsert();
+			$insert->into($this->tableName)->cols($data);
+			$query = $insert;
 		} else {
-			$this->validationErrors = $validator->errors();	
-			return false;
+			if (array_key_exists($this->pkName, $data)) {
+				$id = $data[$this->pkName];
+				unset($data[$this->pkName]);
+
+				$update = $this->queryFactory->newUpdate();
+				$update
+					->table($this->tableName)
+					->cols($data)
+					->where("{$this->pkName} = :id")
+					->bindValue($this->pkName, $id);
+
+				$query = $update;
+			} else {
+				throw new Exception("Can't update, primary key needed", 1);
+			}
 		}
+
+		if (method_exists($this, 'beforeSave')){
+			$data = $this->beforeSave($data, $type);
+		}
+		$this->executeQuery($query);
+		if (method_exists($this, 'afterSave')){
+			$this->afterSave($data, $type);
+		}
+		return true;
 	}
 
 	public function delete($id)
 	{
 		$delete = $this->queryFactory->newDelete();
-		$delete->from($this->tableName)->where("{$this->primaryKeyName} = :id")->bindValue(':id', $id);
+		$delete->from($this->tableName)->where("{$this->pkName} = :id")->bindValue(':id', $id);
 		$this->executeQuery($delete);
 
 		//Always return true because controller expect boolean, if aboce instruction get error an exception will be raised

@@ -26,7 +26,6 @@ class Model
 
 	public $validationErrors;
 
-
 	public function __construct($connection = null)
 	{
 		$connection = (!is_null($connection)) ? $connection : $this->connection;

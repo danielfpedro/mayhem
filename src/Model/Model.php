@@ -26,6 +26,7 @@ class Model
 
 	public $validationErrors;
 
+
 	public function __construct($connection = null)
 	{
 		$connection = (!is_null($connection)) ? $connection : $this->connection;
@@ -55,7 +56,7 @@ class Model
 	{
 		$select = $this->queryFactory->newSelect();
 
-		$select->from($this->tableName .' AS '. basename(get_called_class()));
+		$select->from($this->tableName);
 		return $select;
 	}
 

@@ -2,6 +2,8 @@
 
 namespace Mayhem\Controller;
 
+use Mayhem\Routing\Response;
+
 /**
  * Main controller of the framework
  */
@@ -15,26 +17,17 @@ class Controller
 
 	public $header_body_json;
 
-	function __construct()
+	public $Response;
+
+	function __construct($slim)
 	{
+		$this->slim = $slim;
+		$this->Response = new Response($this->slim->response);
+
+		$this->beforeFilter();
 	}
 
-	public function response($code, $status, $body, $type = 'json')
-	{
-		return $this->responseRaw($code, ['status' => $status, 'message' => $body], $type);
-	}
 
-	public function responseRaw($code, $body = null, $type = 'json')
-	{
-		$this->slim->response->setStatus($code);
-		switch ($type) {
-			case 'json':
-				$this->slim->response->headers->set('Content-Type', 'application/json');
-				$body = json_encode($body);
-				break;
-		}
-		return $this->slim->response->write($body);
-	}
 }
 
 ?>

@@ -26,6 +26,7 @@ class Dispatcher
 				$obj = new $controller_class_name();
 				$obj->config = $config;
 				$obj->request = $slim->request;
+				$obj->header_body_json = json_decode($obj->request->getBody(), true);
 				$obj->slim = $slim;
 
 				//Remove the _ from action name, users can't acces methods the starts with _ char

@@ -18,6 +18,32 @@ class Dispatcher
 	{
 		$slim = new Slim(['debug'=> $config['debug']]);
 
+		$slim->get('/img/:params', function($params) use ($slim) {
+			
+			$extAllowed = ['jpg', 'jpeg', 'png', 'gif'];
+
+			$imgFilePath = IMG_FOLDER . $params;
+
+			if (!file_exists($imgFilePath)) {
+				$slim->response->setStatus(404);
+				$slim->stop();
+			}
+
+			$finfo = finfo_open(FILEINFO_MIME_TYPE);
+			$contentType=  finfo_file($finfo, $imgFilePath);
+			finfo_close($finfo);
+
+			if (Dispatcher::isImageFile($contentType, $extAllowed)) {
+				$image = file_get_contents($imgFilePath);
+				$slim->response->header('Content-Type', $contentType);
+				$slim->response->write($image);
+			} else {
+				$slim->response->setStatus(404);
+			}
+
+			$slim->stop();
+		});
+
 		$slim->map('/:controller(/:action)(/:params+)', function($controller, $action = null, $params = []) use ($slim, $config){
 			
 			$controller_class_name = Dispatcher::setControllerClassName($controller);
@@ -105,6 +131,17 @@ class Dispatcher
 	{
 		return'App\Controller\\' . ucfirst($controller) . 'Controller';
 	}
+
+	public static function isImageFile($filetype, array $allowed)
+	{
+		foreach ($allowed as $value) {
+			if ('image/' . $value == $filetype) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }
 
 ?>

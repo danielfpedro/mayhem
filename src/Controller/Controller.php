@@ -13,6 +13,8 @@ class Controller
 	public $request;
 	public $config;
 
+	public $header_body_json;
+
 	function __construct()
 	{
 	}

@@ -26,6 +26,8 @@ class Model
 
 	public $validationErrors;
 
+	public $lastInsertId;
+
 	public function __construct($connection = null)
 	{
 		$connection = (!is_null($connection)) ? $connection : $this->connection;
@@ -55,7 +57,7 @@ class Model
 	{
 		$select = $this->queryFactory->newSelect();
 
-		$select->from($this->tableName);
+		$select->from("$this->tableName AS $this->tableAlias");
 		return $select;
 	}
 
@@ -135,7 +137,13 @@ class Model
 		if (method_exists($this, 'beforeSave')){
 			$data = $this->beforeSave($data, $type);
 		}
+		
 		$this->executeQuery($query);
+		
+		if ($type == 'create') {
+			$this->lastInsertId = $this->dbh->lastInsertId('id');
+		}
+
 		if (method_exists($this, 'afterSave')){
 			$this->afterSave($data, $type);
 		}

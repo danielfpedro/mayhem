@@ -1,6 +1,6 @@
 <?php
 
-namespace Mayhem\CORS;
+namespace Mayhem\HTTP;
 
 /**
  * Set the CORS to the app can be accessed from external origin

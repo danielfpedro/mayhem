@@ -18,11 +18,6 @@ class Dispatcher
 	{
 		$slim = new Slim(['debug'=> $config['debug']]);
 
-		// Isso aqui serve para os 'PREFLIGHT' do PUT e DELETE com method OPTIONS receber uma resposta positiva 200
-		$slim->map('/:x+', function($x) {
-			http_response_code(200);
-		})->via('OPTIONS');
-
 		$slim->map('/:controller(/:action)(/:params+)', function($controller, $action = null, $params = []) use ($slim, $config){
 			
 			$controller_class_name = Dispatcher::setControllerClassName($controller);
@@ -57,7 +52,7 @@ class Dispatcher
 
 			$slim->halt(404, ($config['debug']) ? $notFoundMsg : 'Not Found');
 		})
-		->via('GET', 'POST', 'PUT', 'DELETE');
+		->via('GET', 'POST', 'PUT', 'DELETE', 'OPTIONS');
 
 		$slim->run();
 	}

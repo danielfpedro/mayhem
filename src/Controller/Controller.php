@@ -20,7 +20,7 @@ class Controller
 	function __construct($slim, $request)
 	{
 		$this->slim = $slim;
-		$this->request - $request;
+		$this->request = $request;
 
 		$this->Response = new Response($this->slim->response);
 

@@ -15,16 +15,16 @@ class Controller
 	public $request;
 	public $config;
 
-	public $header_body_json;
-
 	public $Response;
 
-	function __construct($slim)
+	function __construct($slim, $request)
 	{
 		$this->slim = $slim;
+		$this->request - $request;
+
 		$this->Response = new Response($this->slim->response);
 
-		if (method_exists($this, 'beforeFilder')) {
+		if (method_exists($this, 'beforeFilter')) {
 			$this->beforeFilter();
 		}
 	}

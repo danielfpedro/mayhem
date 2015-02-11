@@ -48,11 +48,33 @@ class Dispatcher
 			
 			$controller_class_name = Dispatcher::setControllerClassName($controller);
 
+			//Remove the _ from action name, users can't acces methods the starts with _ char
+			$action = ($action && $action[0] == '_') ? ltrim($action, '_') : $action;
+
+			$result = Dispatcher::resolveAction($action, $slim->request->getMethod());
+			$action = $result['action'];
+
+			if ($result['params']) {
+				$firstParam[] = $result['params'];
+				$params = array_merge($firstParam, $params);
+			}
+
+			$request = [];
+			$request['slim_request'] = $slim->request;
+			$request['controller'] = $controller;
+			$request['action'] = $action;
+			$request['params'] = $params;
+			$request['get'] = $slim->request->get();
+			$request['put'] = $slim->request->put();
+			$request['post'] = $slim->request->post();
+			$request['delete'] = $slim->request->delete();
+			$request['header_body_json'] = json_decode($slim->request->getBody(), true);
+
+			$request = (object) $request;
+
 			if (class_exists($controller_class_name)) {
-				$obj = new $controller_class_name($slim);
+				$obj = new $controller_class_name($slim, $request);
 				$obj->config = $config;
-				$obj->request = $slim->request;
-				$obj->header_body_json = json_decode($obj->request->getBody(), true);
 
 				//Remove the _ from action name, users can't acces methods the starts with _ char
 				$action = ($action && $action[0] == '_') ? ltrim($action, '_') : $action;

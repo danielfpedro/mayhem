@@ -18,7 +18,9 @@ class Dispatcher
 	{
 		$slim = new Slim(['debug'=> $config['debug']]);
 
-		$slim->get('/img/:params', function($params) use ($slim) {
+		$slim->get('/img/:params+', function($params) use ($slim) {
+			
+			$params = implode(DS, $params);
 			
 			$extAllowed = ['jpg', 'jpeg', 'png', 'gif'];
 

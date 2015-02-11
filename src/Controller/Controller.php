@@ -24,7 +24,9 @@ class Controller
 		$this->slim = $slim;
 		$this->Response = new Response($this->slim->response);
 
-		$this->beforeFilter();
+		if (method_exists($this, 'beforeFilder')) {
+			$this->beforeFilter();
+		}
 	}
 
 

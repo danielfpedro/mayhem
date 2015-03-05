@@ -70,7 +70,7 @@ class Dispatcher
 			$request['put'] = $slim->request->put();
 			$request['post'] = $slim->request->post();
 			$request['delete'] = $slim->request->delete();
-			$request['header_body_json'] = json_decode($slim->request->getBody(), true);
+			$request['headerBodyJson'] = json_decode($slim->request->getBody(), true);
 
 			$request = (object) $request;
 

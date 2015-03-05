@@ -31,7 +31,7 @@ class Model
 	public function __construct($connection = null)
 	{
 		$connection = (!is_null($connection)) ? $connection : $this->connection;
-		$this->queryFactory = new QueryFactory(Datasource::getType($connection));
+		$this->queryFactory = new QueryFactory(Datasource::getConnectionInfo($connection)['type']);
 		$this->setDbh($connection);
 	}
 
@@ -57,7 +57,7 @@ class Model
 	{
 		$select = $this->queryFactory->newSelect();
 
-		$select->from("$this->tableName AS $this->tableAlias");
+		$select->from("$this->tableName $this->tableAlias");
 		return $select;
 	}
 
@@ -93,7 +93,7 @@ class Model
 		}
 
 		$useValidation = true;
-		if (!$this->validations) {
+		if (!method_exists($this, 'defaultRules')) {
 			$useValidation = false;
 		} elseif (isset($options['validate'])) {
 			$useValidation = $options['validate'];
@@ -101,7 +101,16 @@ class Model
 		
 		if ($useValidation) {
 			$validator = new Validator($data);
-			$validator = ValitronAdapter::AdaptRules($this->validations, $validator, $type);
+
+			/**
+			 * Se Adiciona as regras customizadas somente se existirem
+			 */
+			if (method_exists($this, 'customRules')) {
+				foreach ($this->customRules() as $key => $rule) {
+					$validator->addRule($key, $rule['rule'], $rule['message']);
+				}
+			}
+			$validator = ValitronAdapter::AdaptRules($this->defaultRules(), $validator, $type);
 
 			if (method_exists($this, 'beforeValidate') && $useValidation){
 				$data = $this->beforeValidate($data, $type);
@@ -112,19 +121,33 @@ class Model
 			}
 		}
 
+		if (isset($options['allowedField'])) {
+			$cleanData = [];
+			foreach ($options['allowedField'] as $key => $value) {
+				$cleanData[$value] = $data[$value];
+			}
+		} else {
+			$cleanData = $data;
+		}
+
+
+		if (method_exists($this, 'beforeSave')){
+			$cleanData = $this->beforeSave($cleanData, $type);
+		}
+
 		if ($type == 'create') {
 			$insert = $this->queryFactory->newInsert();
-			$insert->into($this->tableName)->cols($data);
+			$insert->into($this->tableName)->cols($cleanData);
 			$query = $insert;
 		} else {
-			if (array_key_exists($this->pkName, $data)) {
-				$id = $data[$this->pkName];
-				unset($data[$this->pkName]);
+			if (array_key_exists($this->pkName, $cleanData)) {
+				$id = $cleanData[$this->pkName];
+				unset($cleanData[$this->pkName]);
 
 				$update = $this->queryFactory->newUpdate();
 				$update
 					->table($this->tableName)
-					->cols($data)
+					->cols($cleanData)
 					->where("{$this->pkName} = :id")
 					->bindValue($this->pkName, $id);
 
@@ -132,10 +155,6 @@ class Model
 			} else {
 				throw new Exception("Can't update, primary key needed", 1);
 			}
-		}
-
-		if (method_exists($this, 'beforeSave')){
-			$data = $this->beforeSave($data, $type);
 		}
 		
 		$this->executeQuery($query);

@@ -27,11 +27,11 @@ class Datasource
 		return $conn;
 	}
 
-	public static function getType($connection)
+	public static function getConnectionInfo($connection)
 	{
 		$datasource = self::getDatasource();
 		try {
-			return $datasource[$connection]['type'];
+			return $datasource[$connection];
 		} catch (Exception $e) {
 			throw new Exception("Connection '{$connection}' name not found on App\config\datasource", 1);	
 		}

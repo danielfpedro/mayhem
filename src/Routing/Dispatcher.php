@@ -90,6 +90,9 @@ class Dispatcher
 
 				if (method_exists($obj, $action)) {
 					if ($config['responseType'] == 'JSON') {
+						if (method_exists($obj, 'beforeFilter')) {
+							$obj->beforeFilter();
+						}
 						call_user_func_array([$obj, $action], $params);
 						return true;
 					}

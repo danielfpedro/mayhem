@@ -23,10 +23,6 @@ class Controller
 		$this->request = $request;
 
 		$this->Response = new Response($this->slim->response);
-
-		if (method_exists($this, 'beforeFilter')) {
-			$this->beforeFilter();
-		}
 	}
 
 

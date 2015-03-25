@@ -27,8 +27,7 @@ class Dispatcher
 			$imgFilePath = IMG_FOLDER . $params;
 
 			if (!file_exists($imgFilePath)) {
-				$slim->response->setStatus(404);
-				$slim->stop();
+				$slim->halt(404, 'Not Found');
 			}
 
 			$finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -40,7 +39,7 @@ class Dispatcher
 				$slim->response->header('Content-Type', $contentType);
 				$slim->response->write($image);
 			} else {
-				$slim->response->setStatus(404);
+				$slim->halt(404, 'Not Found');
 			}
 
 			$slim->stop();

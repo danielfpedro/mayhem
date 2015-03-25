@@ -62,17 +62,9 @@ class Dispatcher
 			}
 
 			$request = [];
-			$request['slim_request'] = $slim->request;
 			$request['controller'] = $controller;
 			$request['action'] = $action;
 			$request['params'] = $params;
-			$request['get'] = $slim->request->get();
-			$request['put'] = $slim->request->put();
-			$request['post'] = $slim->request->post();
-			$request['delete'] = $slim->request->delete();
-			$request['headerBodyJson'] = json_decode($slim->request->getBody(), true);
-
-			$request = (object) $request;
 
 			if (class_exists($controller_class_name)) {
 				$obj = new $controller_class_name($slim, $request);

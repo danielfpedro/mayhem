@@ -2,6 +2,7 @@
 
 namespace Mayhem\Controller;
 
+use Mayhem\Routing\Request;
 use Mayhem\Routing\Response;
 
 /**
@@ -22,6 +23,7 @@ class Controller
 		$this->slim = $slim;
 		$this->request = $request;
 
+		$this->Request = new Request($this->slim->request, $request);
 		$this->Response = new Response($this->slim->response);
 	}
 

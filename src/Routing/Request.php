@@ -35,7 +35,7 @@ class Request
 		/**
 		 * Input
 		 */
-		$this->inputJson = $slimRequest->getBody();
+		$this->inputJson = json_decode($slimRequest->getBody(), true);
 		/**
 		 * Action
 		 */

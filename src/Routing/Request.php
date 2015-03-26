@@ -35,7 +35,7 @@ class Request
 		/**
 		 * Input
 		 */
-		$this->input = $slimRequest->getBody();
+		$this->inputJson = $slimRequest->getBody();
 		/**
 		 * Action
 		 */
@@ -62,12 +62,12 @@ class Request
 		return $this->data;
 	}
 
-	public function input($type)
+	public function json($field = null)
 	{
-		if ($type == 'json' && $this->input) {
-			return json_decode($this->input, true);
+		if ($field) {
+			return isset($this->inputJson[$field]) ? $this->inputJson[$field] : null;
 		}
-		return [];
+		return $this->inputJson;
 	}
 	public function action()
 	{

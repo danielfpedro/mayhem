@@ -121,9 +121,9 @@ class Model
 			}
 		}
 
-		if (isset($options['allowedField'])) {
+		if (isset($options['allowedFields'])) {
 			$cleanData = [];
-			foreach ($options['allowedField'] as $key => $value) {
+			foreach ($options['allowedFields'] as $key => $value) {
 				$cleanData[$value] = $data[$value];
 			}
 		} else {
